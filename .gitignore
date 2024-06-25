@@ -1,3 +1,6 @@
+firebase.json
+lib/firebase_options.dart
+
 .metadata
 android
 ios
