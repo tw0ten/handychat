@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -9,20 +10,51 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
+//theres probly a way to do this more compact - use reset direct in constructor or smthh but NOT IMPORTANT RN. PLEASE
+
+const Color defFgc = Color(0xFFFFFFFF);
+const Color defBgc = Color(0xFF202020);
+const Color defAcc = Color(0xFF40E0D0);
+
 class ThemeNotifier extends ChangeNotifier {
-  ThemeData _themeData;
+  Color fgc, bgc, acc;
+  ThemeData? _themeData;
 
   ThemeNotifier()
-      : _themeData = createTheme(
-          fgc: const Color(0xFFFFFFFF),
-          bgc: const Color(0xFF202020),
-          acc: const Color(0xFF40E0D0),
-        );
+      : acc = defAcc,
+        bgc = defBgc,
+        fgc = defFgc;
 
-  getTheme() => _themeData;
+  ThemeData getTheme() {
+    if (_themeData == null) {
+      setTheme();
+      return createTheme(fgc: fgc, bgc: bgc, acc: acc);
+    }
+    return _themeData!;
+  }
 
-  setTheme(ThemeData themeData) {
-    _themeData = themeData;
+  void setTheme({Color? fgc, Color? bgc, Color? acc}) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (fgc != null) {
+      prefs.setInt("fgc", fgc.value);
+    } else {
+      fgc = Color(prefs.getInt("fgc") ?? this.fgc.value);
+    }
+    this.fgc = fgc;
+    if (bgc != null) {
+      prefs.setInt("bgc", bgc.value);
+    } else {
+      bgc = Color(prefs.getInt("bgc") ?? this.bgc.value);
+    }
+    this.bgc = bgc;
+    if (acc != null) {
+      prefs.setInt("acc", acc.value);
+    } else {
+      acc = Color(prefs.getInt("acc") ?? this.acc.value);
+    }
+    this.acc = acc;
+
+    _themeData = createTheme(fgc: fgc, bgc: bgc, acc: acc);
     notifyListeners();
   }
 }
@@ -59,7 +91,7 @@ class _SettingsPageState extends State<SettingsPage> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text("theme"),
+          const Text("theme", style: TextStyle(fontWeight: FontWeight.bold),),
           Center(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,11 +101,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ThemeNotifier tn =
                         Provider.of<ThemeNotifier>(context, listen: false);
                     tn.setTheme(
-                      createTheme(
-                          fgc: await pickColor("foreground color", context,
-                              tn.getTheme().colorScheme.primary),
-                          bgc: tn.getTheme().colorScheme.surface,
-                          acc: tn.getTheme().colorScheme.secondary),
+                      fgc: await pickColor("foreground color", context, tn.fgc),
                     );
                   },
                   label: const Text("foreground"),
@@ -101,11 +129,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ThemeNotifier tn =
                         Provider.of<ThemeNotifier>(context, listen: false);
                     tn.setTheme(
-                      createTheme(
-                          fgc: tn.getTheme().colorScheme.primary,
-                          bgc: await pickColor("background color", context,
-                              tn.getTheme().colorScheme.surface),
-                          acc: tn.getTheme().colorScheme.secondary),
+                      bgc: await pickColor("background color", context, tn.bgc),
                     );
                   },
                   label: const Text("background"),
@@ -133,11 +157,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ThemeNotifier tn =
                         Provider.of<ThemeNotifier>(context, listen: false);
                     tn.setTheme(
-                      createTheme(
-                          fgc: tn.getTheme().colorScheme.primary,
-                          bgc: tn.getTheme().colorScheme.surface,
-                          acc: await pickColor("accent color", context,
-                              tn.getTheme().colorScheme.secondary)),
+                      acc: await pickColor("accent color", context, tn.acc),
                     );
                   },
                   label: const Text("accent"),
@@ -163,14 +183,20 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
           ),
+          TextButton(
+              onPressed: () {
+                Provider.of<ThemeNotifier>(context, listen: false)
+                    .setTheme(fgc: defFgc, bgc: defBgc, acc: defAcc);
+              },
+              child: const Text("reset"))
         ],
       ),
     );
   }
 
-  Future<Color> pickColor(
+  Future<Color?> pickColor(
       String title, BuildContext context, Color currentColor) async {
-    Color? col = await showDialog<Color>(
+    return await showDialog<Color>(
       context: context,
       builder: (context) {
         Color tempColor = currentColor;
@@ -204,6 +230,5 @@ class _SettingsPageState extends State<SettingsPage> {
         );
       },
     );
-    return col ?? currentColor;
   }
 }
