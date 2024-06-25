@@ -1,6 +1,4 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:handychat/logic.dart';
 import 'package:handychat/main.dart';
 import 'package:handychat/pages/chat.dart';
@@ -21,7 +19,7 @@ class _HomePageState extends State<HomePage> {
     height: 5,
   );
 
-  Widget chat(Chat chat) {
+  Widget chat(Channel chat) {
     return TextButton.icon(
       style: TextButton.styleFrom(
         shape: const RoundedRectangleBorder(
@@ -40,8 +38,8 @@ class _HomePageState extends State<HomePage> {
           ),
         )
       },
-      icon: Image(
-        image: chat.icon,
+      icon: Image.network(
+        chat.picture,
         width: 60,
         height: 60,
       ),
@@ -65,9 +63,7 @@ class _HomePageState extends State<HomePage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => SettingsPage(
-                          userData: User(id: 0),
-                        ),
+                        builder: (context) => const SettingsPage(),
                       ),
                     )
                   },
@@ -78,9 +74,9 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: ListView.separated(
-        itemBuilder: (context, index) => chat(Chat(id: index)),
+        itemBuilder: (context, index) => chat(account.channels[index]),
         separatorBuilder: (context, index) => divider,
-        itemCount: 5,
+        itemCount: account.channels.length,
       ),
     );
   }

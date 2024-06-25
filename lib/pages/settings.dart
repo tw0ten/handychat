@@ -5,9 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key, required this.userData});
-
-  final User userData;
+  const SettingsPage({super.key});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -81,6 +79,14 @@ ThemeData createTheme(
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  final TextEditingController controller = TextEditingController(text: account.name);
+
+  @override
+  void dispose() {
+    super.dispose();
+    controller.dispose();
+  }
+
   Widget colorIcon(Color c) {
     return Icon(
       Icons.circle,
@@ -124,14 +130,16 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             IconButton(
               onPressed: () {},
-              icon: Image(
-                image: widget.userData.picture,
+              icon: Image.network(
+                account.picture,
                 width: 64,
+                height: 64,
               ),
             ),
             SizedBox(
               width: 10.25 * User.maxNameLength,
               child: TextField(
+                controller: controller,
                 onEditingComplete: () {},
                 autocorrect: false,
                 enableSuggestions: false,
@@ -149,7 +157,9 @@ class _SettingsPageState extends State<SettingsPage> {
             //   icon: colorIcon(User().color),
             // ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                account.name = controller.text;
+              },
               child: Text(
                 "update",
                 style:

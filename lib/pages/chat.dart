@@ -1,25 +1,38 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:handychat/logic.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage(this.chat, {super.key});
-  final Chat chat;
+  final Channel chat;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
 }
 
-Color randomColor([int seed = 0]) {
-  final r = Random(seed);
-  return Color(0xFF000000 + r.nextInt(0x00FFFFFF));
-}
-
 class _ChatPageState extends State<ChatPage> {
+  final TextEditingController controller = TextEditingController();
+  final ScrollController scontroller = ScrollController();
+
+  void scrollBottom() {
+    scontroller.animateTo(
+      scontroller.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+    );
+  }
+
   Widget message(Message message) {
     return Text(message.text);
   }
+
+  @override
+  void dispose() {
+    super.dispose();
+    controller.dispose();
+    scontroller.dispose();
+  }
+
+  List<Message> messages = [];
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +40,11 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         title: Row(
           children: [
-            Image(
-              image: widget.chat.icon,
+            Image.network(
+              widget.chat.picture,
               width: 40,
               height: 40,
+              alignment: Alignment.centerLeft,
             ),
             const SizedBox(
               width: 9,
@@ -44,8 +58,8 @@ class _ChatPageState extends State<ChatPage> {
           Expanded(
             child: ListView.builder(
               scrollDirection: Axis.vertical,
-              reverse: true,
-              itemBuilder: (context, index) => message(Message(id: index)),
+              itemBuilder: (context, index) => message(messages[index]),
+              itemCount: messages.length,
             ),
           ),
           Container(
@@ -61,6 +75,7 @@ class _ChatPageState extends State<ChatPage> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxHeight: 100),
                     child: SingleChildScrollView(
+                      controller: scontroller,
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: TextField(
                         maxLines: null,
@@ -68,14 +83,25 @@ class _ChatPageState extends State<ChatPage> {
                           hintText: "...",
                           border: InputBorder.none,
                         ),
-                        onSubmitted: (value) {},
+                        controller: controller,
                       ),
                     ),
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.send),
-                  onPressed: () {},
+                  onPressed: () async {
+                    scrollBottom();
+                    final String msg = controller.text;
+                    // mess. probablywill have better callback update shit system when the db works, for now im guessing it freezes everything depeding on internet speed? maybe not thoug
+                    setState(() {
+                      controller.clear();
+                    });
+                    final msg1 = await account.sendMessage(msg, widget.chat);
+                    setState(() {
+                      messages.add(msg1);
+                    });
+                  },
                 ),
               ],
             ),
