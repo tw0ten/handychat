@@ -133,20 +133,31 @@ class _ChatPageState extends State<ChatPage> {
                 IconButton(
                   icon: const Icon(Icons.send),
                   onPressed: () async {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      scontroller.animateTo(
-                        scontroller.position.maxScrollExtent,
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeOut,
-                      );
-                    });
-                    final msg =
-                        await account.sendMessage(controller.text, widget.chat);
+                    final msg = await account.sendMessage(
+                        Message(
+                          text: controller.text,
+                          sender: account.user,
+                          timestamp: DateTime.now(),
+                        ),
+                        widget.chat);
                     if (msg != null) {
                       controller.clear();
                       setState(() {
                         messages.add(msg);
                       });
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        scontroller.animateTo(
+                          scontroller.position.maxScrollExtent,
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeOut,
+                        );
+                      });
+                    } else {
+                      scontroller.animateTo(
+                        scontroller.position.maxScrollExtent,
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOut,
+                      );
                     }
                   },
                 ),

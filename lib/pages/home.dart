@@ -50,12 +50,15 @@ class _HomePageState extends State<HomePage> {
         width: 56,
         height: 56,
       ),
-      iconAlignment: IconAlignment.start,
     );
   }
 
+  final List<Channel> channels = [];
+
   @override
   Widget build(BuildContext context) {
+    channels.clear();
+    channels.addAll(account.channels);
     return Scaffold(
       appBar: AppBar(
         surfaceTintColor: Theme.of(context).colorScheme.surface,
@@ -65,7 +68,12 @@ class _HomePageState extends State<HomePage> {
         ),
         centerTitle: true,
         actions: [
-          IconButton(onPressed: () => {}, icon: const Icon(Icons.add)),
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              Icons.add,
+            ),
+          ),
           IconButton(
             onPressed: () => {
               Navigator.push(
@@ -84,11 +92,11 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: ListView.separated(
-        itemBuilder: (context, index) => chat(account.user.channels[index]),
+        itemBuilder: (context, index) => chat(channels[index]),
+        itemCount: channels.length,
         separatorBuilder: (context, index) => const SizedBox(
           height: 4,
         ),
-        itemCount: account.user.channels.length,
       ),
     );
   }

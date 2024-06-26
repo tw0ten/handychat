@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:handychat/logic.dart';
-import 'package:handychat/main.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,18 +11,19 @@ class SettingsPage extends StatefulWidget {
   State<SettingsPage> createState() => _SettingsPageState();
 }
 
-const Color defFgc = Color(0xFFFFFFFF),
-    defBgc = Color(0xFF202020),
-    defAcc = Color(0xFF40E0D0);
-
 class ThemeNotifier extends ChangeNotifier {
-  Color fgc, bgc, acc;
+  late Color fgc, bgc, acc;
   ThemeData? _themeData;
 
-  ThemeNotifier()
-      : acc = defAcc,
-        bgc = defBgc,
-        fgc = defFgc;
+  ThemeNotifier() {
+    resetTheme();
+  }
+
+  void resetTheme() {
+    fgc = const Color(0xFFFFFFFF);
+    bgc = const Color(0xFF202020);
+    acc = const Color(0xFF40E0D0);
+  }
 
   ThemeData getTheme() {
     if (_themeData == null) {
@@ -152,9 +152,9 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             TextButton(
-              onPressed: () async {
+              onPressed: () {
                 account.user.name = controller.text;
-                account.user = await login();
+                account.updateProfile();
               },
               child: Text(
                 "update",
@@ -214,8 +214,9 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             TextButton(
               onPressed: () {
-                Provider.of<ThemeNotifier>(context, listen: false)
-                    .setTheme(fgc: defFgc, bgc: defBgc, acc: defAcc);
+                final ThemeNotifier tn = Provider.of<ThemeNotifier>(context, listen: false);
+                tn.resetTheme();
+                tn.setTheme(fgc: tn.fgc, bgc: tn.bgc, acc: tn.acc);
               },
               child: Text(
                 "reset",

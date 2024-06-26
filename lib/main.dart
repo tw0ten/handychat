@@ -6,15 +6,12 @@ import 'pages/home.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-Future<User> login() async {
-  return await account.fetchUser(account.user.id) ?? login();
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await account.login();
   runApp(
     ChangeNotifierProvider<ThemeNotifier>(
       create: (_) => ThemeNotifier(),

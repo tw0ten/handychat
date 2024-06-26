@@ -2,130 +2,50 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 final firestore = FirebaseFirestore.instance;
 
-//todo: ok fetching is working. im not sure wh. wait no. all cache is inside account. so i just fetch everything account has access to at first? channels at least. shallowly? eh. only fetch user ids from channels at first? nah aae eeh fuck. im ean its small enough for now to fetch everything ever recursively
-//yuh i should use references and ig theyre just stringssss or not! maybe in get they are but in set theyre probs different
-
 final Account account = Account(id: "0");
 
 abstract class FSDocument {
   String id;
-  FSDocument({required this.id});
+
+  CollectionReference getCol();
+  DocumentReference getDoc() {
+    return getCol().doc(id);
+  }
+
+  FSDocument({this.id = ""});
 }
 
 class Channel extends FSDocument {
-  String name;
-  String picture;
-  List<User> users;
-  List<Message> messages;
+  String name, picture;
+  List<User> users = [account.user];
+  List<Message> messages = [];
 
   Channel({
-    required super.id,
-    required this.name,
-    required this.picture,
-    required this.users,
-    required this.messages,
+    super.id,
+    this.name = "-",
+    this.picture =
+        "https://raw.githubusercontent.com/tw0ten/dotarch/main/etc/cat.png",
   });
+
+  @override
+  CollectionReference<Object?> getCol() {
+    return firestore.collection("channels");
+  }
 }
 
 class User extends FSDocument {
   static int maxNameLength = 16;
-  String name;
-  String picture;
-  List<Channel> channels;
+  String name, picture;
 
   User({
-    required super.id,
-    required this.name,
-    required this.picture,
-    required this.channels,
+    super.id,
+    this.name = "-",
+    this.picture = "https://tw0ten.github.io/resources/assets/image/me64.png",
   });
-}
 
-class Account {
-  User user;
-
-  Account({required String id})
-      : user = User(
-          id: id,
-          name: "",
-          picture: "https://tw0ten.github.io/resources/assets/image/me64.png",
-          channels: [],
-        );
-
-  void updateUser() async {}
-
-  Future<User?> fetchUser(String id) async {
-    DocumentReference doc = firestore.collection("users").doc(id);
-    DocumentSnapshot ss =
-        await doc.get(const GetOptions(source: Source.serverAndCache));
-    return User(
-      id: id,
-      name: ss.get("name"),
-      picture: ss.get("picture"),
-      channels: [],
-    );
-  }
-
-  Future<Channel?> fetchChannel(String id) async {
-    DocumentReference doc = firestore.collection("channels").doc(id);
-    DocumentSnapshot ss =
-        await doc.get(const GetOptions(source: Source.serverAndCache));
-    
-    return Channel(
-      id: id,
-      name: ss.get("name"),
-      picture: ss.get("picture"),
-      users: [user],
-      messages: [],
-    );
-  }
-
-  Future<Channel> create(
-    String name, {
-    String picture =
-        "https://raw.githubusercontent.com/tw0ten/dotarch/main/etc/cat.png",
-  }) async {
-    DocumentReference channel = await firestore.collection("channels").add({
-      "name": name,
-      "picture": picture,
-      "users": [firestore.collection("users").doc(user.id)],
-    });
-    await firestore.collection("users").doc(user.id).update({
-      "channels": channel,
-    });
-    final c = Channel(
-      id: channel.id,
-      name: name,
-      picture: picture,
-      users: [user],
-      messages: [],
-    );
-    user.channels.add(c);
-    return c;
-  }
-
-  Future<Message?> sendMessage(String text, Channel channel,
-      {List<String> attachments = const []}) async {
-    text = text.trim();
-    if (text.isEmpty) return null;
-    DateTime now = DateTime.now();
-    DocumentReference doc = await firestore
-        .collection("channels")
-        .doc(channel.id)
-        .collection("messages")
-        .add({
-      "text": text,
-      "sender": firestore.collection("users").doc(user.id),
-      "attachments": attachments,
-      "timestamp": now,
-    });
-    return Message(
-      id: doc.id,
-      text: text,
-      sender: user,
-      timestamp: now,
-      attachments: attachments,
-    );
+  @override
+  CollectionReference<Object?> getCol({FSDocument? parent}) {
+    return firestore.collection("users");
   }
 }
 
@@ -133,7 +53,7 @@ class Message extends FSDocument {
   String text;
   User sender;
   DateTime timestamp;
-  List<String> attachments;
+  List<String> attachments = [];
 
   String formatTimestamp() {
     DateTime ts = timestamp.toLocal();
@@ -141,10 +61,111 @@ class Message extends FSDocument {
   }
 
   Message({
-    required super.id,
+    super.id,
     required this.text,
     required this.sender,
     required this.timestamp,
-    required this.attachments,
   });
+
+  @override
+  CollectionReference<Object?> getCol({FSDocument? parent}) {
+    return parent!.getDoc().collection("messages");
+  }
+}
+
+class Account {
+  User user;
+  final List<Channel> channels = [];
+
+  Account({required String id}) : user = User(id: id);
+
+  Future<void> login() async {
+    user = await fetchUser(user) ?? user;
+    var ch = (await user
+            .getDoc()
+            .get(const GetOptions(source: Source.serverAndCache)))
+        .get("channels");
+    channels.clear();
+    for (DocumentReference doc in ch) {
+      final Channel c = Channel(id: doc.id);
+      channels.add(await fetchChannel(c) ?? c);
+    }
+  }
+
+  void updateProfile() {
+    user.getDoc().set(
+      {
+        "name": user.name,
+        "picture": user.picture,
+      },
+    );
+  }
+
+  Future<User?> fetchUser(User user) async {
+    DocumentSnapshot ss = await user
+        .getDoc()
+        .get(const GetOptions(source: Source.serverAndCache));
+    user.name = ss.get("name");
+    user.picture = ss.get("picture");
+    return user;
+  }
+
+  Future<Channel?> fetchChannel(Channel channel) async {
+    DocumentSnapshot ss = await channel
+        .getDoc()
+        .get(const GetOptions(source: Source.serverAndCache));
+    channel.name = ss.get("name");
+    channel.picture = ss.get("picture");
+    List<User> users = [];
+    for (var i in ss.get("users")) {
+      final User u = User(id: i.id);
+      users.add(await fetchUser(u) ?? u);
+    }
+    channel.users = users;
+    List<Message> messages = [];
+    // for (var i in ss.get("messages")) {
+    //   // message i guess handle it very unloaded?
+    //   // ill need to i mean
+    //   // display nonloaded messages
+    //   final Message m = Message(
+    //     id: i.id,
+    //     text: "-",
+    //     sender: user,
+    //     timestamp: DateTime.now(),
+    //   );
+    //   messages.add(await fetchMessage(m) ?? m);
+    // }
+    channel.messages = messages;
+    return channel;
+  }
+
+  Future<Channel> create(Channel channel) async {
+    DocumentReference doc = await channel.getCol().add({
+      "name": channel.name,
+      "picture": channel.name,
+      "users": [user.getDoc()],
+    });
+    await user.getDoc().update({
+      "channels": channel.getDoc(),
+    });
+    channel.id = doc.id;
+    channels.add(channel);
+    return channel;
+  }
+
+  Future<Message?> sendMessage(
+    Message message,
+    Channel channel,
+  ) async {
+    message.text = message.text.trim();
+    if (message.text.isEmpty) return null;
+    DocumentReference doc = await message.getCol(parent: channel).add({
+      "text": message.text,
+      "sender": user.getDoc(),
+      "attachments": message.attachments,
+      "timestamp": message.timestamp,
+    });
+    message.id = doc.id;
+    return message;
+  }
 }

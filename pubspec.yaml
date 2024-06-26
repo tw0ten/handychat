@@ -16,6 +16,12 @@ dependencies:
   shared_preferences:
   cloud_firestore:
   firebase_storage:
+  flutter_launcher_icons:
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/cat.png
 
 dev_dependencies:
   flutter_test:
