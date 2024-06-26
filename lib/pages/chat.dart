@@ -19,7 +19,6 @@ class _ChatPageState extends State<ChatPage> {
         message.sender.picture,
         width: 32,
         height: 32,
-        alignment: Alignment.center,
       ),
       title: Row(
         children: [

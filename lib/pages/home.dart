@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:handychat/logic.dart';
 import 'package:handychat/main.dart';
 import 'package:handychat/pages/chat.dart';
@@ -41,6 +40,7 @@ class _HomePageState extends State<HomePage> {
         Navigator.push(
           context,
           MaterialPageRoute(
+            maintainState: false,
             builder: (context) => ChatPage(chat),
           ),
         )
@@ -71,6 +71,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
+                  maintainState: false,
                   builder: (context) => const SettingsPage(),
                 ),
               )
@@ -83,11 +84,11 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: ListView.separated(
-        itemBuilder: (context, index) => chat(account.channels[index]),
+        itemBuilder: (context, index) => chat(account.user.channels[index]),
         separatorBuilder: (context, index) => const SizedBox(
           height: 4,
         ),
-        itemCount: account.channels.length,
+        itemCount: account.user.channels.length,
       ),
     );
   }

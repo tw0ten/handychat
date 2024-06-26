@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:handychat/logic.dart';
+import 'package:handychat/main.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -79,7 +80,8 @@ ThemeData createTheme(
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  final TextEditingController controller = TextEditingController(text: account.name);
+  final TextEditingController controller =
+      TextEditingController(text: account.user.name);
 
   @override
   void dispose() {
@@ -125,7 +127,6 @@ class _SettingsPageState extends State<SettingsPage> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            
             const Text(
               "user",
               style: TextStyle(fontWeight: FontWeight.bold),
@@ -133,7 +134,7 @@ class _SettingsPageState extends State<SettingsPage> {
             IconButton(
               onPressed: () {},
               icon: Image.network(
-                account.picture,
+                account.user.picture,
                 width: 64,
                 height: 64,
               ),
@@ -150,17 +151,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 textAlignVertical: TextAlignVertical.center,
               ),
             ),
-            // TextButton.icon(
-            //   onPressed: () async {
-            //     await pickColor("personal color", context, User().color);
-            //   },
-            //   label: const Text("personal"),
-            //   iconAlignment: IconAlignment.end,
-            //   icon: colorIcon(User().color),
-            // ),
             TextButton(
-              onPressed: () {
-                account.name = controller.text;
+              onPressed: () async {
+                account.user.name = controller.text;
+                account.user = await login();
               },
               child: Text(
                 "update",
@@ -168,11 +162,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     TextStyle(color: Theme.of(context).colorScheme.secondary),
               ),
             ),
-            // divider,
-            // const Text(
-            //   "notifications",
-            //   style: TextStyle(fontWeight: FontWeight.bold),
-            // ),
             divider,
             const Text(
               "theme",

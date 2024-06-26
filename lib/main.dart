@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:handychat/logic.dart';
 import 'package:handychat/pages/settings.dart';
 import 'package:provider/provider.dart';
 import 'pages/home.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+
+Future<User> login() async {
+  return await account.fetchUser(account.user.id) ?? login();
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
