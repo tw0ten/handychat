@@ -40,6 +40,7 @@ analysis_options.yaml
 **/ios/Flutter/.last_build_id
 .dart_tool/
 flutter_*.png
+devtools_options.yaml
 .flutter-plugins
 .flutter-plugins-dependencies
 .pub-cache/

@@ -5,9 +5,16 @@ final firestore = FirebaseFirestore.instance;
 final Account account = Account(
   id: "xd",
   name: "b",
-  picture: "https://raw.githubusercontent.com/tw0ten/dotarch/main/etc/cat.png",
+  picture: "https://tw0ten.github.io/resources/assets/image/me64.png",
   channels: [
-    Channel(id: "id", name: "name", picture: "https://raw.githubusercontent.com/tw0ten/dotarch/main/etc/cat.png", users: [], messages: [])
+    Channel(
+      id: "id",
+      name: "Лол 😈",
+      picture:
+          "https://raw.githubusercontent.com/tw0ten/dotarch/main/etc/cat.png",
+      users: [],
+      messages: [],
+    ),
   ],
 );
 
@@ -75,23 +82,36 @@ class Account extends User {
     return c;
   }
 
-  //todo func for well validating it, returning optional whereas this is future
-
-  Future<Message> sendMessage(String text, Channel channel,
+  Future<Message?> sendMessage(String text, Channel channel,
       {List<String> attachments = const []}) async {
     text = text.trim();
-    return Message(id: " ", text: text, sender: this, attachments: attachments);
+    if (text.isEmpty) return null;
+    return Message(
+      id: "",
+      text: text,
+      sender: this,
+      timestamp: DateTime.now(),
+      attachments: attachments,
+    );
   }
 }
 
 class Message extends FSDocument {
   String text;
   User sender;
+  DateTime timestamp;
   List<String> attachments;
 
-  Message(
-      {required super.id,
-      required this.text,
-      required this.sender,
-      required this.attachments});
+  String formatTimestamp() {
+    DateTime ts = timestamp.toLocal();
+    return "${ts.hour.toString().padLeft(2, "0")}:${ts.minute.toString().padLeft(2, "0")}|${ts.day.toString().padLeft(2, "0")}/${ts.month.toString().padLeft(2, "0")}";
+  }
+
+  Message({
+    required super.id,
+    required this.text,
+    required this.sender,
+    required this.timestamp,
+    required this.attachments,
+  });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:handychat/logic.dart';
 import 'package:handychat/main.dart';
 import 'package:handychat/pages/chat.dart';
@@ -12,13 +13,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final divider = const Divider(
-    indent: 0,
-    endIndent: 0,
-    thickness: 1,
-    height: 5,
-  );
-
   Widget chat(Channel chat) {
     return TextButton.icon(
       style: TextButton.styleFrom(
@@ -27,9 +21,22 @@ class _HomePageState extends State<HomePage> {
         ),
         alignment: Alignment.centerLeft,
         fixedSize: const Size.fromHeight(64),
-        padding: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.all(4),
       ),
-      label: Text(chat.name),
+      label: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              softWrap: false,
+              overflow: TextOverflow.fade,
+              chat.name,
+              maxLines: 1,
+            ),
+          ),
+        ],
+      ),
       onPressed: () => {
         Navigator.push(
           context,
@@ -40,8 +47,8 @@ class _HomePageState extends State<HomePage> {
       },
       icon: Image.network(
         chat.picture,
-        width: 60,
-        height: 60,
+        width: 56,
+        height: 56,
       ),
       iconAlignment: IconAlignment.start,
     );
@@ -51,6 +58,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        surfaceTintColor: Theme.of(context).colorScheme.surface,
         title: Text(
           title,
           style: TextStyle(color: Theme.of(context).colorScheme.secondary),
@@ -59,15 +67,16 @@ class _HomePageState extends State<HomePage> {
         actions: [
           IconButton(onPressed: () => {}, icon: const Icon(Icons.add)),
           IconButton(
-              onPressed: () => {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SettingsPage(),
-                      ),
-                    )
-                  },
-              icon: const Icon(Icons.settings)),
+            onPressed: () => {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsPage(),
+                ),
+              )
+            },
+            icon: const Icon(Icons.settings),
+          ),
           const SizedBox(
             width: 4,
           )
@@ -75,7 +84,9 @@ class _HomePageState extends State<HomePage> {
       ),
       body: ListView.separated(
         itemBuilder: (context, index) => chat(account.channels[index]),
-        separatorBuilder: (context, index) => divider,
+        separatorBuilder: (context, index) => const SizedBox(
+          height: 4,
+        ),
         itemCount: account.channels.length,
       ),
     );

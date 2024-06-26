@@ -115,6 +115,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        surfaceTintColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.secondary,
         title: const Text("settings"),
         centerTitle: true,
@@ -124,6 +125,7 @@ class _SettingsPageState extends State<SettingsPage> {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            
             const Text(
               "user",
               style: TextStyle(fontWeight: FontWeight.bold),
@@ -166,6 +168,11 @@ class _SettingsPageState extends State<SettingsPage> {
                     TextStyle(color: Theme.of(context).colorScheme.secondary),
               ),
             ),
+            // divider,
+            // const Text(
+            //   "notifications",
+            //   style: TextStyle(fontWeight: FontWeight.bold),
+            // ),
             divider,
             const Text(
               "theme",

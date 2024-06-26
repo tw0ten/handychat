@@ -13,16 +13,42 @@ class _ChatPageState extends State<ChatPage> {
   final TextEditingController controller = TextEditingController();
   final ScrollController scontroller = ScrollController();
 
-  void scrollBottom() {
-    scontroller.animateTo(
-      scontroller.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-    );
-  }
-
   Widget message(Message message) {
-    return Text(message.text);
+    return ListTile(
+      leading: Image.network(
+        message.sender.picture,
+        width: 32,
+        height: 32,
+        alignment: Alignment.center,
+      ),
+      title: Row(
+        children: [
+          Text(
+            message.sender.name,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.secondary,
+            ),
+          ),
+          const SizedBox(
+            width: 4,
+          ),
+          Text(
+            message.formatTimestamp(),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary.withAlpha(128),
+            ),
+          ),
+        ],
+      ),
+      subtitle: Text(message.text),
+      trailing: IconButton(
+        onPressed: () {},
+        icon: Icon(
+          Icons.info,
+          color: Theme.of(context).colorScheme.primary.withAlpha(128),
+        ),
+      ),
+    );
   }
 
   @override
@@ -32,34 +58,52 @@ class _ChatPageState extends State<ChatPage> {
     scontroller.dispose();
   }
 
-  List<Message> messages = [];
+  final List<Message> messages = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 0,
+        surfaceTintColor: Theme.of(context).colorScheme.surface,
         title: Row(
           children: [
-            Image.network(
-              widget.chat.picture,
-              width: 40,
-              height: 40,
-              alignment: Alignment.centerLeft,
+            IconButton(
+              onPressed: () {},
+              icon: Image.network(
+                widget.chat.picture,
+                width: 40,
+                height: 40,
+                alignment: Alignment.centerLeft,
+              ),
             ),
             const SizedBox(
-              width: 9,
+              width: 8,
             ),
-            Text(widget.chat.name),
+            Expanded(
+              child: Text(
+                widget.chat.name,
+                maxLines: 1,
+                overflow: TextOverflow.fade,
+              ),
+            ),
+            const SizedBox(
+              width: 4,
+            ),
           ],
         ),
       ),
       body: Column(
         children: [
           Expanded(
-            child: ListView.builder(
+            child: ListView.separated(
               scrollDirection: Axis.vertical,
               itemBuilder: (context, index) => message(messages[index]),
+              separatorBuilder: (context, index) => const SizedBox(
+                height: 4,
+              ),
               itemCount: messages.length,
+              controller: scontroller,
             ),
           ),
           Container(
@@ -75,7 +119,6 @@ class _ChatPageState extends State<ChatPage> {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxHeight: 100),
                     child: SingleChildScrollView(
-                      controller: scontroller,
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: TextField(
                         maxLines: null,
@@ -91,16 +134,21 @@ class _ChatPageState extends State<ChatPage> {
                 IconButton(
                   icon: const Icon(Icons.send),
                   onPressed: () async {
-                    scrollBottom();
-                    final String msg = controller.text;
-                    // mess. probablywill have better callback update shit system when the db works, for now im guessing it freezes everything depeding on internet speed? maybe not thoug
-                    setState(() {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      scontroller.animateTo(
+                        scontroller.position.maxScrollExtent,
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOut,
+                      );
+                    });
+                    final msg =
+                        await account.sendMessage(controller.text, widget.chat);
+                    if (msg != null) {
                       controller.clear();
-                    });
-                    final msg1 = await account.sendMessage(msg, widget.chat);
-                    setState(() {
-                      messages.add(msg1);
-                    });
+                      setState(() {
+                        messages.add(msg);
+                      });
+                    }
                   },
                 ),
               ],
