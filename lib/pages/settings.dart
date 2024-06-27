@@ -140,7 +140,7 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
             SizedBox(
-              width: 10.25 * User.maxNameLength,
+              width: 12.0 * User.maxNameLength,
               child: TextField(
                 controller: controller,
                 onEditingComplete: () {},
@@ -214,7 +214,8 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             TextButton(
               onPressed: () {
-                final ThemeNotifier tn = Provider.of<ThemeNotifier>(context, listen: false);
+                final ThemeNotifier tn =
+                    Provider.of<ThemeNotifier>(context, listen: false);
                 tn.resetTheme();
                 tn.setTheme(fgc: tn.fgc, bgc: tn.bgc, acc: tn.acc);
               },

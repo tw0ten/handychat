@@ -1,5 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+//you already know it baby
+//the classic
+//TODO: REDO
+
+const defaultPicutreUrl = "https://raw.githubusercontent.com/tw0ten/dotarch/main/etc/cat.png";
+
 final firestore = FirebaseFirestore.instance;
 
 final Account account = Account(id: "0");
@@ -20,11 +26,12 @@ class Channel extends FSDocument {
   List<User> users = [account.user];
   List<Message> messages = [];
 
+  DocumentSnapshot? lastMessage;
+
   Channel({
     super.id,
     this.name = "-",
-    this.picture =
-        "https://raw.githubusercontent.com/tw0ten/dotarch/main/etc/cat.png",
+    this.picture = defaultPicutreUrl,
   });
 
   @override
@@ -40,7 +47,7 @@ class User extends FSDocument {
   User({
     super.id,
     this.name = "-",
-    this.picture = "https://tw0ten.github.io/resources/assets/image/me64.png",
+    this.picture = defaultPicutreUrl,
   });
 
   @override
@@ -53,7 +60,7 @@ class Message extends FSDocument {
   String text;
   User sender;
   DateTime timestamp;
-  List<String> attachments = [];
+  List<String> attachments;
 
   String formatTimestamp() {
     DateTime ts = timestamp.toLocal();
@@ -65,6 +72,7 @@ class Message extends FSDocument {
     required this.text,
     required this.sender,
     required this.timestamp,
+    required this.attachments,
   });
 
   @override
@@ -93,12 +101,10 @@ class Account {
   }
 
   void updateProfile() {
-    user.getDoc().set(
-      {
-        "name": user.name,
-        "picture": user.picture,
-      },
-    );
+    user.getDoc().update({
+      "name": user.name,
+      "picture": user.picture,
+    });
   }
 
   Future<User?> fetchUser(User user) async {
@@ -122,21 +128,47 @@ class Account {
       users.add(await fetchUser(u) ?? u);
     }
     channel.users = users;
-    List<Message> messages = [];
-    // for (var i in ss.get("messages")) {
-    //   // message i guess handle it very unloaded?
-    //   // ill need to i mean
-    //   // display nonloaded messages
-    //   final Message m = Message(
-    //     id: i.id,
-    //     text: "-",
-    //     sender: user,
-    //     timestamp: DateTime.now(),
-    //   );
-    //   messages.add(await fetchMessage(m) ?? m);
-    // }
-    channel.messages = messages;
+    channel.messages = await fetchMessages(channel, 1) ?? [];
     return channel;
+  }
+
+  Future<List<Message>?> fetchMessages(Channel channel, int batch) async {
+    Query query = channel
+        .getDoc()
+        .collection("messages")
+        .orderBy("timestamp", descending: true)
+        .limit(batch);
+
+    final DocumentSnapshot? last = channel.lastMessage;
+    if (last != null) {
+      query = query.startAfterDocument(last);
+    }
+
+    List<DocumentSnapshot> arr =
+        (await query.get(const GetOptions(source: Source.serverAndCache))).docs;
+    List<Message> msgs = [];
+    for (DocumentSnapshot msg in arr) {
+      User sender = User(id: (msg.get("sender") as DocumentReference).id);
+      for (User u in channel.users) {
+        if (u.id == sender.id) {
+          sender = u;
+          break;
+        }
+      }
+      List<String> attachments = [];
+      for(dynamic i in msg.get("attachments")) {
+        attachments.add(i as String);
+      }
+      msgs.add(Message(
+        id: msg.id,
+        text: msg.get("text") as String,
+        sender: sender,
+        timestamp: (msg.get("timestamp") as Timestamp).toDate(),
+        attachments: attachments,
+      ));
+      channel.lastMessage = msg;
+    }
+    return msgs;
   }
 
   Future<Channel> create(Channel channel) async {
@@ -145,11 +177,15 @@ class Account {
       "picture": channel.name,
       "users": [user.getDoc()],
     });
+    this.channels.add(channel);
+    List<DocumentReference> channels = [];
+    for (Channel c in this.channels) {
+      channels.add(c.getDoc());
+    }
     await user.getDoc().update({
-      "channels": channel.getDoc(),
+      "channels": channels,
     });
     channel.id = doc.id;
-    channels.add(channel);
     return channel;
   }
 

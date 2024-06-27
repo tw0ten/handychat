@@ -3,6 +3,7 @@ import 'package:handychat/logic.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage(this.chat, {super.key});
+
   final Channel chat;
 
   @override
@@ -29,7 +30,7 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ),
           const SizedBox(
-            width: 4,
+            width: 8,
           ),
           Text(
             message.formatTimestamp(),
@@ -50,17 +51,55 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
+  void scListener() async {
+    if (scontroller.position.atEdge && scontroller.position.pixels == 0) {
+      fetchMessages();
+    }
+  }
+
+  void fetchMessages([bool scrollBottom = false]) async {
+    List<Message> msgs = await account.fetchMessages(widget.chat, 10) ?? [];
+    setState(() {
+      messages.insertAll(0, msgs);
+    });
+    if (scrollBottom) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        scrollToBottom();
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    scontroller.addListener(scListener);
+    messages.addAll(widget.chat.messages);
+  }
+
   @override
   void dispose() {
-    super.dispose();
     controller.dispose();
+    scontroller.removeListener(scListener);
     scontroller.dispose();
+    super.dispose();
+  }
+
+  void scrollToBottom() {
+    scontroller.animateTo(
+      scontroller.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+    );
   }
 
   final List<Message> messages = [];
 
   @override
   Widget build(BuildContext context) {
+    if (widget.chat.messages.length == 1) {
+      fetchMessages(true);
+    }
+
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
@@ -138,6 +177,7 @@ class _ChatPageState extends State<ChatPage> {
                           text: controller.text,
                           sender: account.user,
                           timestamp: DateTime.now(),
+                          attachments: [],
                         ),
                         widget.chat);
                     if (msg != null) {
@@ -146,18 +186,10 @@ class _ChatPageState extends State<ChatPage> {
                         messages.add(msg);
                       });
                       WidgetsBinding.instance.addPostFrameCallback((_) {
-                        scontroller.animateTo(
-                          scontroller.position.maxScrollExtent,
-                          duration: const Duration(milliseconds: 200),
-                          curve: Curves.easeOut,
-                        );
+                        scrollToBottom();
                       });
                     } else {
-                      scontroller.animateTo(
-                        scontroller.position.maxScrollExtent,
-                        duration: const Duration(milliseconds: 200),
-                        curve: Curves.easeOut,
-                      );
+                      scrollToBottom();
                     }
                   },
                 ),

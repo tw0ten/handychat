@@ -26,13 +26,17 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              softWrap: false,
-              overflow: TextOverflow.fade,
-              chat.name,
-              maxLines: 1,
-            ),
+          Text(
+            softWrap: false,
+            overflow: TextOverflow.fade,
+            chat.name,
+            maxLines: 1,
+          ),
+          Text(
+            softWrap: true,
+            overflow: TextOverflow.fade,
+            "${chat.messages[chat.messages.length-1].sender.name}: ${chat.messages[chat.messages.length - 1].text}",
+            maxLines: 2,
           ),
         ],
       ),
