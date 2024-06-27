@@ -20,6 +20,11 @@ class _ChatPageState extends State<ChatPage> {
         message.sender.picture,
         width: 32,
         height: 32,
+        errorBuilder: (context, error, stackTrace) => const Image(
+          image: AssetImage("assets/cat.png"),
+          width: 32,
+          height: 32,
+        ),
       ),
       title: Row(
         children: [
@@ -52,21 +57,24 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void scListener() async {
-    if (scontroller.position.atEdge && scontroller.position.pixels == 0) {
-      fetchMessages();
+    if (scontroller.position.atEdge &&
+        scontroller.position.pixels == scontroller.position.maxScrollExtent) {
+      fetchOldMessages();
     }
   }
 
-  void fetchMessages([bool scrollBottom = false]) async {
-    List<Message> msgs = await account.fetchMessages(widget.chat, 10) ?? [];
-    setState(() {
-      messages.insertAll(0, msgs);
+  void fetchOldMessages() async {
+    final List<Message> msgs =
+        await account.fetchMessages(widget.chat, 10) ?? [];
+    widget.chat.messages.addAll(msgs);
+    account.channels.update(widget.chat.id, (c) {
+      c.lastMessage = widget.chat.lastMessage;
+      c.messages = widget.chat.messages;
+      return c;
     });
-    if (scrollBottom) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        scrollToBottom();
-      });
-    }
+    setState(() {
+      messages.addAll(msgs);
+    });
   }
 
   @override
@@ -86,7 +94,7 @@ class _ChatPageState extends State<ChatPage> {
 
   void scrollToBottom() {
     scontroller.animateTo(
-      scontroller.position.maxScrollExtent,
+      scontroller.position.minScrollExtent,
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
     );
@@ -97,7 +105,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     if (widget.chat.messages.length == 1) {
-      fetchMessages(true);
+      fetchOldMessages();
     }
 
     return Scaffold(
@@ -113,6 +121,11 @@ class _ChatPageState extends State<ChatPage> {
                 width: 40,
                 height: 40,
                 alignment: Alignment.centerLeft,
+                errorBuilder: (context, error, stackTrace) => const Image(
+                  image: AssetImage("assets/cat.png"),
+                  width: 40,
+                  height: 40,
+                ),
               ),
             ),
             const SizedBox(
@@ -140,6 +153,7 @@ class _ChatPageState extends State<ChatPage> {
               separatorBuilder: (context, index) => const SizedBox(
                 height: 4,
               ),
+              reverse: true,
               itemCount: messages.length,
               controller: scontroller,
             ),
@@ -182,8 +196,13 @@ class _ChatPageState extends State<ChatPage> {
                         widget.chat);
                     if (msg != null) {
                       controller.clear();
+                      widget.chat.messages.insert(0, msg);
+                      account.channels.update(widget.chat.id, (c) {
+                        c.messages = widget.chat.messages;
+                        return c;
+                      });
                       setState(() {
-                        messages.add(msg);
+                        messages.insert(0, msg);
                       });
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         scrollToBottom();

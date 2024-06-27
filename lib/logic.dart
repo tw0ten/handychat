@@ -3,12 +3,25 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 //you already know it baby
 //the classic
 //TODO: REDO
+//TODO: AUTH
 
-const defaultPicutreUrl = "https://raw.githubusercontent.com/tw0ten/dotarch/main/etc/cat.png";
+//fuck. just watched a tutorial video and its like so much cleaner and better in every way, his app i mean fuuuuck.
+//YKW????? STILL PROUD. BUILT THIS FROM ZERO.
+//just pure blooded programmer
+//cant read doc or educate himself at least briefly on the topic
+//google+chatgpt
+//all the way
+//wouldnt want it any other way
+//o7
+//next commit will hopefully be a rebuilt version with perfect structuring.
+//byeee
+
+const defaultPicutreUrl =
+    "https://raw.githubusercontent.com/tw0ten/dotarch/main/etc/cat.png";
 
 final firestore = FirebaseFirestore.instance;
 
-final Account account = Account(id: "0");
+final Account account = Account(id: "1");
 
 abstract class FSDocument {
   String id;
@@ -83,7 +96,7 @@ class Message extends FSDocument {
 
 class Account {
   User user;
-  final List<Channel> channels = [];
+  final Map<String, Channel> channels = {};
 
   Account({required String id}) : user = User(id: id);
 
@@ -95,8 +108,9 @@ class Account {
         .get("channels");
     channels.clear();
     for (DocumentReference doc in ch) {
-      final Channel c = Channel(id: doc.id);
-      channels.add(await fetchChannel(c) ?? c);
+      Channel c = Channel(id: doc.id);
+      c = await fetchChannel(c) ?? c;
+      channels.putIfAbsent(c.id, () => c);
     }
   }
 
@@ -133,6 +147,7 @@ class Account {
   }
 
   Future<List<Message>?> fetchMessages(Channel channel, int batch) async {
+    await Future.delayed(Duration(seconds: 5));
     Query query = channel
         .getDoc()
         .collection("messages")
@@ -148,6 +163,17 @@ class Account {
         (await query.get(const GetOptions(source: Source.serverAndCache))).docs;
     List<Message> msgs = [];
     for (DocumentSnapshot msg in arr) {
+      // prevent it from fetching a message potentially already sent locally. i guess it should run through the whole thing.? fhrwedfvg
+      bool contains = false;
+      for(int i = 0; i<batch&&i<channel.messages.length; i++){
+        if(channel.messages[i].id==msg.id){
+          contains = true;
+          break;
+        }
+      }
+      if(contains){
+        continue;
+      }
       User sender = User(id: (msg.get("sender") as DocumentReference).id);
       for (User u in channel.users) {
         if (u.id == sender.id) {
@@ -156,7 +182,7 @@ class Account {
         }
       }
       List<String> attachments = [];
-      for(dynamic i in msg.get("attachments")) {
+      for (dynamic i in msg.get("attachments")) {
         attachments.add(i as String);
       }
       msgs.add(Message(
@@ -177,9 +203,9 @@ class Account {
       "picture": channel.name,
       "users": [user.getDoc()],
     });
-    this.channels.add(channel);
+    this.channels.putIfAbsent(channel.id, () => channel);
     List<DocumentReference> channels = [];
-    for (Channel c in this.channels) {
+    for (Channel c in this.channels.values) {
       channels.add(c.getDoc());
     }
     await user.getDoc().update({

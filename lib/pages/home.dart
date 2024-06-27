@@ -4,6 +4,8 @@ import 'package:handychat/main.dart';
 import 'package:handychat/pages/chat.dart';
 import 'package:handychat/pages/settings.dart';
 
+//TODO: ykw? ill probably easily make this thing if i actually watch a tutorial or just read how the state things work and how the app should actually be structured
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -34,35 +36,49 @@ class _HomePageState extends State<HomePage> {
           ),
           Text(
             softWrap: true,
-            overflow: TextOverflow.fade,
-            "${chat.messages[chat.messages.length-1].sender.name}: ${chat.messages[chat.messages.length - 1].text}",
+            overflow: TextOverflow.clip,
+            "${chat.messages[chat.messages.length - 1].sender.name}: ${chat.messages[chat.messages.length - 1].text}",
             maxLines: 2,
           ),
         ],
       ),
-      onPressed: () => {
+      onPressed: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            maintainState: false,
             builder: (context) => ChatPage(chat),
           ),
-        )
+        );
       },
       icon: Image.network(
         chat.picture,
         width: 56,
         height: 56,
+        errorBuilder: (context, error, stackTrace) => const Image(
+          image: AssetImage("assets/cat.png"),
+          width: 56,
+          height: 56,
+        ),
       ),
     );
   }
 
-  final List<Channel> channels = [];
+  final List<String> channels = [];
+
+  @override
+  void initState() {
+    channels.addAll(account.channels.keys);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    channels.clear();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    channels.clear();
-    channels.addAll(account.channels);
     return Scaffold(
       appBar: AppBar(
         surfaceTintColor: Theme.of(context).colorScheme.surface,
@@ -83,7 +99,6 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  maintainState: false,
                   builder: (context) => const SettingsPage(),
                 ),
               )
@@ -96,7 +111,13 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: ListView.separated(
-        itemBuilder: (context, index) => chat(channels[index]),
+        itemBuilder: (context, index) {
+          final Channel? c = account.channels[channels[index]];
+          if (c == null) {
+            return Container();
+          }
+          return chat(c);
+        },
         itemCount: channels.length,
         separatorBuilder: (context, index) => const SizedBox(
           height: 4,

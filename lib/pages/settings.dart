@@ -137,6 +137,11 @@ class _SettingsPageState extends State<SettingsPage> {
                 account.user.picture,
                 width: 64,
                 height: 64,
+                errorBuilder: (context, error, stackTrace) => const Image(
+                  image: AssetImage("assets/cat.png"),
+                  width: 64,
+                  height: 64,
+                ),
               ),
             ),
             SizedBox(
