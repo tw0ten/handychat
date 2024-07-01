@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:handychat/logic.dart';
-import 'package:handychat/pages/settings.dart';
+import 'package:handychat/main/pages/auth.dart';
+import 'package:handychat/main/pages/etc/settings.dart';
 import 'package:provider/provider.dart';
-import 'pages/home.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -11,7 +10,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await account.login();
   runApp(
     ChangeNotifierProvider<ThemeNotifier>(
       create: (_) => ThemeNotifier(),
@@ -20,7 +18,7 @@ void main() async {
   );
 }
 
-const title = "HANDYCHAT";
+const title = "handychat";
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -33,7 +31,7 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           title: title,
           theme: themeNotifier.getTheme(),
-          home: const HomePage(),
+          home: const AuthGate(),
         );
       },
     );

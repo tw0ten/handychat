@@ -13,6 +13,7 @@ dependencies:
   flutter_colorpicker:
   provider:
   firebase_core:
+  firebase_auth:
   shared_preferences:
   cloud_firestore:
   firebase_storage:
