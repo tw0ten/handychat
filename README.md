@@ -1,3 +1,2 @@
 # handychat
-
-chat app for mobile
+mobile chat app
