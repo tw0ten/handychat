@@ -1,0 +1,39 @@
+name: handychat
+description: "mobile chat app"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.3'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons:
+  flutter_colorpicker:
+  provider:
+  firebase_core:
+  firebase_auth:
+  shared_preferences:
+  cloud_firestore:
+  firebase_storage:
+  flutter_launcher_icons:
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/cat.png
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints:
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/cat.png
+  fonts:
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/JetBrainsMono-Regular.ttf
